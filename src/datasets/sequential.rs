@@ -1,3 +1,5 @@
+//! Sequential `u64` dataset generator.
+
 use crate::datasets::Dataset;
 use rand::rngs::SmallRng;
 use rand::seq::SliceRandom;

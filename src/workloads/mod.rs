@@ -1,3 +1,5 @@
+//! Workload definitions used to stress each table under different access mixes.
+
 /// Result of running one workload on one table instance.
 pub struct WorkloadResult {
     /// Total nanoseconds spent on insert operations.

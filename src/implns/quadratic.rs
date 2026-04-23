@@ -1,7 +1,10 @@
+//! Quadratic-probing baseline.
+
 use crate::hash_utils::hash1;
 use crate::trait_def::HashTable;
 use std::hash::Hash;
 
+/// Open-addressed table that widens probe distance quadratically.
 pub struct QuadraticTable<K> {
     slots: Vec<Option<K>>,
     capacity: usize,
@@ -11,6 +14,7 @@ pub struct QuadraticTable<K> {
 impl<K: Hash + Eq + Clone> QuadraticTable<K> {
     const MAX_LOAD: f64 = 0.75;
 
+    /// Inserts into an existing slot array without triggering growth.
     fn raw_insert(slots: &mut [Option<K>], capacity: usize, key: K) -> bool {
         let start = (hash1(&key) as usize) % capacity;
         let mut idx = start;
@@ -30,6 +34,7 @@ impl<K: Hash + Eq + Clone> QuadraticTable<K> {
         }
     }
 
+    /// Rehashes all stored keys into a table with doubled capacity.
     fn grow(&mut self) {
         let new_cap = self.capacity * 2;
         let mut new_slots: Vec<Option<K>> = vec![None; new_cap];

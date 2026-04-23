@@ -6,7 +6,7 @@
 #   "pandas",
 # ]
 # ///
-"""SlickBench orchestration and plotting pipeline."""
+"""Benchmark orchestration and plotting pipeline for SlickBench."""
 
 from __future__ import annotations
 
@@ -32,6 +32,7 @@ WIKI_PATH = DATA_DIR / "wiki_titles.txt"
 
 
 def print_command(command: list[str]) -> None:
+    """Print a command exactly as it will be executed."""
     print(f"[bench.py] $ {' '.join(command)}")
 
 
@@ -40,6 +41,7 @@ def run_command(
     *,
     allow_unsupported_read_heavy: bool = False,
 ) -> bool:
+    """Run a subprocess, optionally treating unsupported workloads as skips."""
     print_command(command)
     result = subprocess.run(command, text=True, capture_output=True)
 
@@ -65,6 +67,7 @@ def run_command(
 
 
 def ensure_datasets() -> None:
+    """Download external datasets only when the local files are absent."""
     DATA_DIR.mkdir(exist_ok=True)
     missing = [path for path in (NORVIG_PATH, WIKI_PATH) if not path.exists()]
     if not missing:
@@ -75,10 +78,12 @@ def ensure_datasets() -> None:
 
 
 def build_release() -> None:
+    """Build the Rust benchmark binary once before the benchmark matrix."""
     run_command(["cargo", "build", "--release"])
 
 
 def dataset_size(dataset: str) -> int:
+    """Select the benchmark size appropriate for the dataset key type."""
     if dataset in U64_DATASETS:
         return U64_SIZE
     if dataset in STRING_DATASETS:
@@ -87,6 +92,7 @@ def dataset_size(dataset: str) -> int:
 
 
 def benchmark_command(dataset: str, workload: str, size: int) -> list[str]:
+    """Construct the benchmark command in deterministic argument order."""
     return [
         "cargo",
         "run",
@@ -102,6 +108,7 @@ def benchmark_command(dataset: str, workload: str, size: int) -> list[str]:
 
 
 def run_benchmark(dataset: str, workload: str, size: int) -> bool:
+    """Execute one dataset/workload pair, adding `perf stat` when available."""
     command = benchmark_command(dataset, workload, size)
     perf_path = shutil.which("perf")
 
@@ -128,6 +135,7 @@ def run_benchmark(dataset: str, workload: str, size: int) -> bool:
 
 
 def generate_plots(results_path: Path) -> None:
+    """Generate one PNG per workload from the accumulated CSV rows."""
     print(f"[bench.py] Loading results from {results_path}")
     df = pd.read_csv(results_path)
 
@@ -179,6 +187,7 @@ def generate_plots(results_path: Path) -> None:
 
 
 def main() -> None:
+    """Run the benchmark matrix and produce plots from the resulting CSV."""
     ensure_datasets()
     build_release()
 

@@ -13,6 +13,8 @@
       };
     in {
       devShells.${system}.default = pkgs.mkShell {
+        # The shell provides both the Python scientific stack used by the
+        # plotting scripts and the C++ runtime needed by native Python wheels.
         packages = with pkgs; [
           python3
           python3Packages.numpy
@@ -24,6 +26,8 @@
         ];
 
         shellHook = ''
+          # Prefer the Nix-provided interpreter so `uv run` reuses the shell
+          # environment instead of creating an incompatible managed runtime.
           export UV_PYTHON=python3
           export UV_NO_MANAGED_PYTHON=1
           export UV_PYTHON_DOWNLOADS=never

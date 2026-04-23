@@ -1,9 +1,12 @@
+//! Two-table cuckoo hashing baseline.
+
 use crate::hash_utils::{hash1, hash2};
 use crate::trait_def::HashTable;
 use std::hash::Hash;
 
 const MAX_KICKS: usize = 128;
 
+/// Cuckoo table with one location in each backing array.
 pub struct CuckooTable<K> {
     table1: Vec<Option<K>>,
     table2: Vec<Option<K>>,
@@ -20,6 +23,7 @@ impl<K: Hash + Eq + Clone> CuckooTable<K> {
         (hash2(key) as usize) % cap
     }
 
+    /// Attempts one cuckoo insertion sequence before signaling a rebuild.
     fn try_insert(
         t1: &mut [Option<K>],
         t2: &mut [Option<K>],
@@ -44,6 +48,7 @@ impl<K: Hash + Eq + Clone> CuckooTable<K> {
         Err(key)
     }
 
+    /// Grows the tables until all existing keys can be reinserted successfully.
     fn rebuild(&mut self) {
         let mut new_cap = self.capacity * 2;
         loop {

@@ -1,3 +1,8 @@
+//! CLI entry point for the benchmark binary.
+//!
+//! The binary parses a dataset/workload selection, instantiates the matching
+//! typed dataset, and forwards execution to the shared generic runner.
+
 use clap::Parser;
 use slickbench::datasets::Dataset;
 use slickbench::metrics::record::BenchRecord;
@@ -31,6 +36,8 @@ struct Cli {
     reps: usize,
 }
 
+/// Expands to one benchmark run per table implementation for a specific
+/// dataset/workload pairing while preserving monomorphized dispatch.
 macro_rules! run_all_tables_for_workload {
     ($config:expr, $dataset:expr, $workload_name:expr, $workload_fn:path) => {
         vec![
@@ -71,6 +78,7 @@ macro_rules! run_all_tables_for_workload {
     };
 }
 
+/// Executes one workload across all table implementations for a dataset type.
 fn run_workload<K>(dataset: &Dataset<K>, reps: usize, workload: &str) -> Vec<BenchRecord>
 where
     K: Hash + Eq + Clone + Default,
@@ -102,6 +110,8 @@ where
 
 fn main() {
     let cli = Cli::parse();
+    // Dataset dispatch remains typed so both numeric and string-key tables are
+    // compiled through the same generic workload path.
     let records = match cli.dataset.as_str() {
         "uniform" => run_workload(
             &slickbench::datasets::uniform::generate(cli.size, cli.seed),

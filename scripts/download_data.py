@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Download data files needed for Norvig and Wikipedia datasets."""
+"""Download external datasets required by the string-key benchmarks."""
 import urllib.request
 from pathlib import Path
 
 Path("data").mkdir(exist_ok=True)
 
+# Norvig word-frequency list used by the `norvig` dataset loader.
 url = "https://norvig.com/ngrams/count_1w.txt"
 dest = "data/norvig_words.txt"
 if not Path(dest).exists():
@@ -20,6 +21,8 @@ if not Path(wiki_dest).exists():
     import gzip
     import shutil
 
+    # Download the compressed title dump and expand it into the format expected
+    # by the Rust dataset loader.
     gz_dest = wiki_dest + ".gz"
     print("Downloading Wikipedia titles (this may be large)...")
     urllib.request.urlretrieve(wiki_url, gz_dest)

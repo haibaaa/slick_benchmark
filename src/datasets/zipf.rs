@@ -1,3 +1,5 @@
+//! Zipf-distributed `u64` dataset generator.
+
 use crate::datasets::Dataset;
 use rand::rngs::SmallRng;
 use rand::seq::SliceRandom;
@@ -9,6 +11,8 @@ use rand_distr::{Distribution, Zipf};
 /// Keys map directly from Zipf samples (1-indexed u64).
 pub fn generate(size: usize, seed: u64) -> Dataset<u64> {
     let mut rng = SmallRng::seed_from_u64(seed);
+    // The population size matches the requested sample count so the skewed key
+    // domain scales with each experiment.
     let zipf = Zipf::new(size as u64, 1.1).expect("Zipf distribution creation failed");
     let mut keys: Vec<u64> = (0..size).map(|_| zipf.sample(&mut rng) as u64).collect();
     keys.shuffle(&mut rng);

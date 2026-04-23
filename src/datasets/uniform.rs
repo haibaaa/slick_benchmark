@@ -1,3 +1,5 @@
+//! Uniform random `u64` dataset generator.
+
 use crate::datasets::Dataset;
 use rand::rngs::SmallRng;
 use rand::seq::SliceRandom;
@@ -7,6 +9,7 @@ use rand::{Rng, SeedableRng};
 /// Keys are NOT deduplicated — duplicates are expected and preserved.
 pub fn generate(size: usize, seed: u64) -> Dataset<u64> {
     let mut rng = SmallRng::seed_from_u64(seed);
+    // Duplicates are preserved intentionally to match the benchmark contract.
     let mut keys: Vec<u64> = (0..size).map(|_| rng.gen::<u64>()).collect();
     keys.shuffle(&mut rng);
     Dataset {

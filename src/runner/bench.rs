@@ -1,3 +1,8 @@
+//! Core benchmark runner utilities.
+//!
+//! The runner executes one workload across repeated fresh table instances and
+//! retains the best observed insert and find times independently.
+
 use crate::datasets::Dataset;
 use crate::metrics::record::BenchRecord;
 use crate::trait_def::HashTable;
@@ -41,6 +46,8 @@ where
         let result = workload_fn(&mut table, dataset);
         best = Some(match best {
             None => result,
+            // The benchmark records the minimum insert and find times seen across
+            // repetitions to reduce noise from transient host activity.
             Some(prev) => WorkloadResult {
                 insert_ns: prev.insert_ns.min(result.insert_ns),
                 find_ns: prev.find_ns.min(result.find_ns),

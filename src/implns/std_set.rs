@@ -1,6 +1,9 @@
+//! `std::collections::HashSet` baseline with a fixed ahash seed.
+
 use crate::trait_def::HashTable;
 use std::hash::Hash;
 
+/// Standard-library hash set used as a practical baseline.
 pub struct StdSetTable<K> {
     inner: std::collections::HashSet<K, ahash::RandomState>,
 }

@@ -1,3 +1,5 @@
+//! Loader for the Wikipedia title dataset.
+
 use crate::datasets::Dataset;
 use rand::rngs::SmallRng;
 use rand::seq::SliceRandom;

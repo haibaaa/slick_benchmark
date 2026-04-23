@@ -1,3 +1,8 @@
+//! Centralized hashing helpers shared by all table implementations.
+//!
+//! Using one module for `hash1` and `hash2` keeps benchmarking fair by ensuring
+//! that each custom table observes the same seeded AHasher behavior.
+
 use ahash::{AHasher, RandomState};
 use std::hash::{BuildHasher, Hash, Hasher};
 

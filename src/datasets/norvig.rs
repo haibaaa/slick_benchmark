@@ -1,3 +1,5 @@
+//! Loader for the Norvig word-frequency dataset.
+
 use crate::datasets::Dataset;
 use rand::rngs::SmallRng;
 use rand::seq::SliceRandom;

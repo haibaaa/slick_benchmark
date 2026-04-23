@@ -1,3 +1,5 @@
+//! Mixed workload with 80% finds and 20% inserts.
+
 use crate::datasets::Dataset;
 use crate::trait_def::HashTable;
 use crate::workloads::WorkloadResult;
@@ -19,6 +21,8 @@ where
     let n = keys.len();
     let half = n / 2;
 
+    // Warm-up is intentionally excluded from timing so the mixed phase measures
+    // only the interleaved operation stream.
     for key in &keys[..half] {
         table.insert(key.clone());
     }
@@ -31,6 +35,8 @@ where
     let mut insert_idx = half;
     let mut find_idx = 0usize;
 
+    // Per-operation timing is required here because inserts and finds are
+    // interleaved rather than executed in contiguous phases.
     for _ in 0..half {
         if rng.gen::<f64>() > FIND_RATIO && insert_idx < n {
             let t = Instant::now();

@@ -1,7 +1,13 @@
+//! Slick hash integration adapted from the project reference implementation.
+//!
+//! The control flow mirrors the reference while replacing hashing and the
+//! overflow store as required by the benchmark rules.
+
 use crate::trait_def::HashTable;
 use std::hash::Hash;
 use std::ops::Range;
 
+/// Per-block metadata used by Slick's sliding-gap layout.
 pub struct SlickHashMetaData {
     offset: usize,
     gap: usize,
@@ -32,6 +38,7 @@ impl<K: Hash + Eq + Clone> Backyard<K> {
         }
     }
 
+    /// Reinserts all overflow keys into a larger overflow table.
     fn grow(&mut self) {
         let new_capacity = self.capacity * 2;
         let mut new_entries = vec![None; new_capacity];
@@ -92,6 +99,7 @@ impl<K: Hash + Eq + Clone> Backyard<K> {
         }
     }
 
+    /// Deletes a key and repairs the probe cluster behind it.
     fn remove_entry(&mut self, key: &K) -> Option<(K, ())> {
         let mut idx = (crate::hash_utils::hash1(key) as usize) % self.capacity;
         let start = idx;
@@ -128,6 +136,7 @@ impl<K: Hash + Eq + Clone> Backyard<K> {
     }
 }
 
+/// Slick main structure with a primary sliding-gap table plus overflow store.
 pub struct SlickHash<K> {
     main_table_size: usize,
     block_size: usize,
@@ -145,6 +154,7 @@ impl<K> SlickHash<K>
 where
     K: Clone + Eq + PartialEq + Hash + Default,
 {
+    /// Rounds the requested capacity to an integer number of Slick blocks.
     fn with_capacity(capacity: usize) -> Self {
         let block_size: usize = 10;
         let max_slick_size = block_size * 2;
@@ -178,11 +188,13 @@ where
         }
     }
 
+    /// Returns the first logical slot owned by the block after offset shifts.
     fn block_start(&self, block_index: usize) -> usize {
         assert!(block_index < self.number_of_blocks);
         self.block_size * block_index + self.meta_data[block_index].offset
     }
 
+    /// Returns the exclusive end of the block after accounting for neighboring offsets.
     fn block_end(&self, block_index: usize) -> usize {
         assert!(block_index < self.number_of_blocks);
         if block_index == self.number_of_blocks - 1 {
@@ -202,6 +214,7 @@ where
         self.backyard.insert(key, ())
     }
 
+    /// Tries to move one free slot toward `block_index` from the left.
     fn slide_gap_from_left(&mut self, block_index: usize) -> bool {
         let mut sliding_block_index = block_index;
         while self.meta_data[sliding_block_index].gap == 0 {
@@ -231,6 +244,7 @@ where
         true
     }
 
+    /// Tries to move one free slot toward `block_index` from the right.
     fn slide_gap_from_right(&mut self, block_index: usize) -> bool {
         if block_index == self.number_of_blocks - 1 {
             return false;
@@ -295,6 +309,7 @@ where
                 || self.slide_gap_from_right(block_index))
     }
 
+    /// Inserts a key following Slick's block-local placement and threshold bumping logic.
     fn try_insert(&mut self, key: K) -> Insertion<'_, ()> {
         let block_index = self.hash_block_index(&key);
         let block_start = self.block_start(block_index);
@@ -335,6 +350,8 @@ where
             }
             let t_prime = min_threshold_hash + 1;
 
+            // When the block is saturated, raise the threshold and move low-priority
+            // keys into the overflow table before retrying the pending insert.
             self.meta_data[block_index].threshold = t_prime;
             let mut j = block_start;
             let mut block_end = self.block_end(block_index);
@@ -375,6 +392,7 @@ where
         Insertion::Inserted(&mut self.main_table[current_block_end].1)
     }
 
+    /// Looks up a key either in the main block or in the overflow table.
     fn get(&self, key: &K) -> Option<&()> {
         let block_index = self.hash_block_index(key);
         if self.hash_threshold(key) < self.meta_data[block_index].threshold {

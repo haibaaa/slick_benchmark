@@ -1,3 +1,5 @@
+//! CSV row definitions and serialization helpers.
+
 use serde::Serialize;
 
 /// One row in the output CSV.

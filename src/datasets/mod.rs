@@ -1,3 +1,5 @@
+//! Dataset definitions and loading helpers.
+
 /// A loaded dataset, ready for benchmarking.
 /// Keys are already shuffled and NOT deduplicated.
 pub struct Dataset<K> {

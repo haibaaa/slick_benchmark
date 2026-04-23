@@ -1,3 +1,5 @@
+//! Bulk workload: insert all keys, then probe all keys.
+
 use crate::datasets::Dataset;
 use crate::trait_def::HashTable;
 use crate::workloads::WorkloadResult;
@@ -13,6 +15,7 @@ where
     let keys = &dataset.keys;
     let n = keys.len();
 
+    // Bulk timings are batched by phase to avoid per-operation timer overhead.
     let t0 = Instant::now();
     for key in keys {
         table.insert(key.clone());
