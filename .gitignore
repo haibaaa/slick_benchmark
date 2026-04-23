@@ -1,2 +1,6 @@
 AGENT.md
+target/*
 refs/*
+data/*
+results.csv
+.codex
