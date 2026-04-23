@@ -1,6 +1,22 @@
-AGENT.md
-target/*
-refs/*
-data/*
+# Project-specific
+AGENTS.md
+
+# Rust
+target/
+
+# Reference / internal
+refs/
+
+# Data + outputs
+data/
+plots/
 results.csv
+
+# Tooling
 .codex
+
+# Python (recommended additions)
+__pycache__/
+*.pyc
+.venv/
+.env
