@@ -11,3 +11,4 @@ pub struct WorkloadResult {
 }
 
 pub mod bulk;
+pub mod mixed;

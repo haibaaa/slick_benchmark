@@ -1,4 +1,7 @@
 use clap::Parser;
+use slickbench::datasets::Dataset;
+use slickbench::metrics::record::BenchRecord;
+use std::hash::Hash;
 
 #[derive(Parser, Debug)]
 #[command(name = "slickbench", about = "Hash table benchmarking framework")]
@@ -28,156 +31,103 @@ struct Cli {
     reps: usize,
 }
 
-fn run_bulk_u64(
-    dataset: &slickbench::datasets::Dataset<u64>,
-    reps: usize,
-) -> Vec<slickbench::metrics::record::BenchRecord> {
-    let config = slickbench::runner::bench::RunConfig {
-        initial_capacity: 1024,
-        repetitions: reps,
+macro_rules! run_all_tables_for_workload {
+    ($config:expr, $dataset:expr, $workload_name:expr, $workload_fn:path) => {
+        vec![
+            slickbench::runner::bench::run_one::<K, slickbench::implns::linear::LinearTable<K>, _>(
+                $config,
+                $dataset,
+                $workload_name,
+                "linear",
+                $workload_fn,
+            ),
+            slickbench::runner::bench::run_one::<
+                K,
+                slickbench::implns::quadratic::QuadraticTable<K>,
+                _,
+            >($config, $dataset, $workload_name, "quadratic", $workload_fn),
+            slickbench::runner::bench::run_one::<K, slickbench::implns::cuckoo::CuckooTable<K>, _>(
+                $config,
+                $dataset,
+                $workload_name,
+                "cuckoo",
+                $workload_fn,
+            ),
+            slickbench::runner::bench::run_one::<K, slickbench::implns::slick::SlickHash<K>, _>(
+                $config,
+                $dataset,
+                $workload_name,
+                "slick",
+                $workload_fn,
+            ),
+            slickbench::runner::bench::run_one::<K, slickbench::implns::std_set::StdSetTable<K>, _>(
+                $config,
+                $dataset,
+                $workload_name,
+                "std_set",
+                $workload_fn,
+            ),
+        ]
     };
-    vec![
-        slickbench::runner::bench::run_one::<u64, slickbench::implns::linear::LinearTable<u64>, _>(
-            &config,
-            dataset,
-            "bulk",
-            "linear",
-            slickbench::workloads::bulk::run,
-        ),
-        slickbench::runner::bench::run_one::<
-            u64,
-            slickbench::implns::quadratic::QuadraticTable<u64>,
-            _,
-        >(
-            &config,
-            dataset,
-            "bulk",
-            "quadratic",
-            slickbench::workloads::bulk::run,
-        ),
-        slickbench::runner::bench::run_one::<u64, slickbench::implns::cuckoo::CuckooTable<u64>, _>(
-            &config,
-            dataset,
-            "bulk",
-            "cuckoo",
-            slickbench::workloads::bulk::run,
-        ),
-        slickbench::runner::bench::run_one::<u64, slickbench::implns::slick::SlickHash<u64>, _>(
-            &config,
-            dataset,
-            "bulk",
-            "slick",
-            slickbench::workloads::bulk::run,
-        ),
-        slickbench::runner::bench::run_one::<u64, slickbench::implns::std_set::StdSetTable<u64>, _>(
-            &config,
-            dataset,
-            "bulk",
-            "std_set",
-            slickbench::workloads::bulk::run,
-        ),
-    ]
 }
 
-fn run_bulk_string(
-    dataset: &slickbench::datasets::Dataset<String>,
-    reps: usize,
-) -> Vec<slickbench::metrics::record::BenchRecord> {
+fn run_workload<K>(dataset: &Dataset<K>, reps: usize, workload: &str) -> Vec<BenchRecord>
+where
+    K: Hash + Eq + Clone + Default,
+{
     let config = slickbench::runner::bench::RunConfig {
         initial_capacity: 1024,
         repetitions: reps,
     };
-    vec![
-        slickbench::runner::bench::run_one::<
-            String,
-            slickbench::implns::linear::LinearTable<String>,
-            _,
-        >(
+
+    match workload {
+        "bulk" => {
+            run_all_tables_for_workload!(&config, dataset, "bulk", slickbench::workloads::bulk::run)
+        }
+        "mixed" => run_all_tables_for_workload!(
             &config,
             dataset,
-            "bulk",
-            "linear",
-            slickbench::workloads::bulk::run,
+            "mixed",
+            slickbench::workloads::mixed::run
         ),
-        slickbench::runner::bench::run_one::<
-            String,
-            slickbench::implns::quadratic::QuadraticTable<String>,
-            _,
-        >(
-            &config,
-            dataset,
-            "bulk",
-            "quadratic",
-            slickbench::workloads::bulk::run,
-        ),
-        slickbench::runner::bench::run_one::<
-            String,
-            slickbench::implns::cuckoo::CuckooTable<String>,
-            _,
-        >(
-            &config,
-            dataset,
-            "bulk",
-            "cuckoo",
-            slickbench::workloads::bulk::run,
-        ),
-        slickbench::runner::bench::run_one::<String, slickbench::implns::slick::SlickHash<String>, _>(
-            &config,
-            dataset,
-            "bulk",
-            "slick",
-            slickbench::workloads::bulk::run,
-        ),
-        slickbench::runner::bench::run_one::<
-            String,
-            slickbench::implns::std_set::StdSetTable<String>,
-            _,
-        >(
-            &config,
-            dataset,
-            "bulk",
-            "std_set",
-            slickbench::workloads::bulk::run,
-        ),
-    ]
+        other => panic!("unsupported workload '{other}'"),
+    }
 }
 
 fn main() {
     let cli = Cli::parse();
-    if cli.workload != "bulk" {
-        panic!(
-            "unsupported workload '{}': Phase 3 only supports bulk",
-            cli.workload
-        );
-    }
-
     let records = match cli.dataset.as_str() {
-        "uniform" => run_bulk_u64(
+        "uniform" => run_workload(
             &slickbench::datasets::uniform::generate(cli.size, cli.seed),
             cli.reps,
+            &cli.workload,
         ),
-        "sequential" => run_bulk_u64(
+        "sequential" => run_workload(
             &slickbench::datasets::sequential::generate(cli.size, cli.seed),
             cli.reps,
+            &cli.workload,
         ),
-        "zipf" => run_bulk_u64(
+        "zipf" => run_workload(
             &slickbench::datasets::zipf::generate(cli.size, cli.seed),
             cli.reps,
+            &cli.workload,
         ),
-        "norvig" => run_bulk_string(
+        "norvig" => run_workload(
             &slickbench::datasets::norvig::load(cli.size, cli.seed),
             cli.reps,
+            &cli.workload,
         ),
-        "wikipedia" => run_bulk_string(
+        "wikipedia" => run_workload(
             &slickbench::datasets::wikipedia::load(cli.size, cli.seed),
             cli.reps,
+            &cli.workload,
         ),
         other => panic!("unsupported dataset '{other}'"),
     };
 
     slickbench::metrics::record::write_csv(&cli.output, &records).unwrap();
     println!(
-        "Phase 3 complete. dataset={}, workload={}, size={}",
+        "Phase 4 complete. dataset={}, workload={}, size={}",
         cli.dataset, cli.workload, cli.size
     );
 }
