@@ -90,6 +90,12 @@ where
             "mixed",
             slickbench::workloads::mixed::run
         ),
+        "read_heavy" => run_all_tables_for_workload!(
+            &config,
+            dataset,
+            "read_heavy",
+            slickbench::workloads::read_heavy::run
+        ),
         other => panic!("unsupported workload '{other}'"),
     }
 }
@@ -127,7 +133,7 @@ fn main() {
 
     slickbench::metrics::record::write_csv(&cli.output, &records).unwrap();
     println!(
-        "Phase 4 complete. dataset={}, workload={}, size={}",
+        "Phase 5 complete. dataset={}, workload={}, size={}",
         cli.dataset, cli.workload, cli.size
     );
 }

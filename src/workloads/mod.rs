@@ -12,3 +12,4 @@ pub struct WorkloadResult {
 
 pub mod bulk;
 pub mod mixed;
+pub mod read_heavy;
