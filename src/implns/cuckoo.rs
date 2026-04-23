@@ -114,4 +114,16 @@ impl<K: Hash + Eq + Clone> HashTable<K> for CuckooTable<K> {
         self.table1[i1].as_ref().is_some_and(|k| k == key)
             || self.table2[i2].as_ref().is_some_and(|k| k == key)
     }
+
+    fn capacity(&self) -> usize {
+        self.capacity * 2
+    }
+
+    fn len(&self) -> usize {
+        self.count
+    }
+
+    fn extra_space(&self) -> usize {
+        0
+    }
 }

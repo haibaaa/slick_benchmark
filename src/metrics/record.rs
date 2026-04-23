@@ -18,6 +18,10 @@ pub struct BenchRecord {
     pub insert_count: usize,
     /// Total number of finds performed.
     pub find_count: usize,
+    pub capacity: usize,
+    pub elements: usize,
+    pub bytes_estimate: usize,
+    pub bytes_per_element: usize,
 }
 
 impl BenchRecord {
@@ -27,6 +31,10 @@ impl BenchRecord {
         table: &str,
         load_factor: f64,
         result: &crate::workloads::WorkloadResult,
+        capacity: usize,
+        elements: usize,
+        bytes_estimate: usize,
+        bytes_per_element: usize,
     ) -> Self {
         BenchRecord {
             dataset: dataset.to_string(),
@@ -37,6 +45,10 @@ impl BenchRecord {
             find_ns_per_op: result.find_ns as f64 / result.find_count.max(1) as f64,
             insert_count: result.insert_count,
             find_count: result.find_count,
+            capacity,
+            elements,
+            bytes_estimate,
+            bytes_per_element,
         }
     }
 }

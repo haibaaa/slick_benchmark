@@ -40,12 +40,20 @@ where
     F: Fn(&mut T, &Dataset<K>) -> WorkloadResult,
 {
     let mut best: Option<WorkloadResult> = None;
+    let mut best_metrics: Option<(usize, usize, usize)> = None;
 
     for _ in 0..config.repetitions {
         let mut table = T::new(config.initial_capacity);
         let result = workload_fn(&mut table, dataset);
+        let cap = table.capacity();
+        let len = table.len();
+        let extra = table.extra_space();
+        
         best = Some(match best {
-            None => result,
+            None => {
+                best_metrics = Some((cap, len, extra));
+                result
+            },
             // The benchmark records the minimum insert and find times seen across
             // repetitions to reduce noise from transient host activity.
             Some(prev) => WorkloadResult {
@@ -58,7 +66,11 @@ where
     }
 
     let best = best.unwrap();
+    let metrics = best_metrics.unwrap();
     let load_factor = dataset.keys.len() as f64 / config.initial_capacity as f64;
+    
+    let bytes_estimate = metrics.0 * std::mem::size_of::<(K, ())>() + metrics.2 * std::mem::size_of::<K>();
+    let bytes_per_element = if metrics.1 > 0 { bytes_estimate / metrics.1 } else { 0 };
 
-    BenchRecord::from_result(&dataset.name, workload_name, table_name, load_factor, &best)
+    BenchRecord::from_result(&dataset.name, workload_name, table_name, load_factor, &best, metrics.0, metrics.1, bytes_estimate, bytes_per_element)
 }

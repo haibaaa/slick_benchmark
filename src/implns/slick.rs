@@ -449,4 +449,16 @@ where
     fn find(&self, key: &K) -> bool {
         self.get(key).is_some()
     }
+
+    fn capacity(&self) -> usize {
+        self.main_table_size
+    }
+
+    fn len(&self) -> usize {
+        self.no_elements_in_main_table + self.backyard.len()
+    }
+
+    fn extra_space(&self) -> usize {
+        self.backyard.capacity
+    }
 }

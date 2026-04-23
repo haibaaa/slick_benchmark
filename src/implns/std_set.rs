@@ -28,4 +28,16 @@ impl<K: Hash + Eq + Clone> HashTable<K> for StdSetTable<K> {
     fn find(&self, key: &K) -> bool {
         self.inner.contains(key)
     }
+
+    fn capacity(&self) -> usize {
+        self.inner.capacity()
+    }
+
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    fn extra_space(&self) -> usize {
+        0
+    }
 }

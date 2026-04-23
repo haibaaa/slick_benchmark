@@ -20,4 +20,8 @@ pub trait HashTable<K: std::hash::Hash + Eq + Clone> {
 
     /// Return true if key exists in the table, false otherwise.
     fn find(&self, key: &K) -> bool;
+
+    fn capacity(&self) -> usize;
+    fn len(&self) -> usize;
+    fn extra_space(&self) -> usize;
 }

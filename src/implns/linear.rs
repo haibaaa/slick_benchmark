@@ -81,4 +81,16 @@ impl<K: Hash + Eq + Clone> HashTable<K> for LinearTable<K> {
             }
         }
     }
+
+    fn capacity(&self) -> usize {
+        self.capacity
+    }
+
+    fn len(&self) -> usize {
+        self.count
+    }
+
+    fn extra_space(&self) -> usize {
+        0
+    }
 }
