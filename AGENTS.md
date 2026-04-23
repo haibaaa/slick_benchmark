@@ -1614,5 +1614,19 @@ The benchmark is considered correctly implemented when all of the following are 
 9. **No forbidden behaviors**: checklist in §16 passes fully
 
 ---
+## Version Control Guidelines
+
+After completing each phase successfully:
+
+- Verify the phase builds and runs without errors
+- Ensure results.csv is generated correctly
+- Then create a Git commit
+
+Example:
+
+```bash
+git add .
+git commit -m "<short description>"
+```
 
 *End of AGENT.md*
