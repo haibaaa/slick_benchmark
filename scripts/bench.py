@@ -185,6 +185,37 @@ def generate_plots(results_path: Path) -> None:
         plt.close(fig)
         print(f"[bench.py] Saved plot: {output_path}")
 
+        # Generate space efficiency plot
+        fig, axis = plt.subplots(figsize=(8, 6), constrained_layout=True)
+        metric = "bytes_per_element"
+        title = "Space Efficiency"
+
+        for index, table in enumerate(tables):
+            table_subset = subset[subset["table"] == table]
+            values = []
+            for dataset in datasets:
+                dataset_subset = table_subset[table_subset["dataset"] == dataset]
+                values.append(
+                    float(dataset_subset.iloc[-1][metric]) if not dataset_subset.empty else 0.0
+                )
+
+            offsets = [
+                x + (index - (len(tables) - 1) / 2) * width for x in x_positions
+            ]
+            axis.bar(offsets, values, width=width, label=table)
+
+        axis.set_title(f"{workload}: {title}")
+        axis.set_xlabel("dataset")
+        axis.set_ylabel("bytes per element")
+        axis.set_xticks(x_positions)
+        axis.set_xticklabels(datasets, rotation=20)
+        axis.legend(title="table", bbox_to_anchor=(1.02, 1.0), loc="upper left")
+
+        output_path = PLOTS_DIR / f"space_{workload}.png"
+        fig.savefig(output_path, dpi=150)
+        plt.close(fig)
+        print(f"[bench.py] Saved plot: {output_path}")
+
 
 def main() -> None:
     """Run the benchmark matrix and produce plots from the resulting CSV."""
