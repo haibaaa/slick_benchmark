@@ -8,6 +8,8 @@ clarity rather than line-by-line translation from Rust.
 Store every key in one array. On collision, advance one slot at a time until an empty slot or the
 target key is found.
 
+**Space Characteristics:** Extremely high memory locality and minimal overhead (1 metadata bit/slot). Efficiency is high until the table exceeds 70-80% capacity.
+
 ### Pseudocode
 ```python
 def insert(key):
@@ -43,6 +45,8 @@ def find(key):
 ### Idea
 Use one array as in linear probing, but widen probe distance quadratically to reduce primary
 clustering.
+
+**Space Characteristics:** Identical to linear probing in raw slot usage, but improves search efficiency by spreading keys more evenly across the allocated memory.
 
 ### Pseudocode
 ```python
@@ -83,6 +87,8 @@ def find(key):
 ### Idea
 Maintain two tables and two hash functions. A key may live in one location in table 1 or one
 location in table 2. Insertions may evict existing keys and trigger rebuilds.
+
+**Space Characteristics:** Requires two distinct tables (effectively $2 \times$ minimum size). Memory efficiency is lower than probing during growth phases, but lookups are strictly $O(1)$.
 
 ### Pseudocode
 ```python
@@ -126,6 +132,8 @@ def find(key):
 Slick partitions the main table into blocks. Each block tracks metadata for offset, gap size, and
 threshold. Inserts attempt to stay within the block, slide nearby gaps when possible, and move
 lower-priority keys to an overflow structure when a block becomes too constrained.
+
+**Space Characteristics:** Significant metadata overhead per block. Further requires a "backyard" overflow table, leading to higher overall `bytes_per_element` compared to simple probing.
 
 ### Pseudocode
 ```python

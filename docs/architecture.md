@@ -86,6 +86,24 @@ runs the selected workload, and records the best insert and find timings indepen
 - insert and find cost per operation
 - insert and find counts
 
+### Metrics Collection
+The benchmark suite evaluates two primary categories of performance:
+
+#### Time Metrics
+Measurements are collected in nanoseconds per operation (`ns/op`). To minimize noise, each workload is repeated (default 3 times), and the minimum execution time across repetitions is recorded.
+
+- `insert_ns_per_op`: Average cost of a single key insertion.
+- `find_ns_per_op`: Average cost of a single key lookup.
+
+#### Space Metrics
+Memory usage is estimated based on the table's capacity and key/value sizes.
+- `capacity`: Total number of slots allocated in the primary table(s).
+- `elements`: Total number of successfully stored items at the end of the workload.
+- `bytes_estimate`: Total estimated memory footprint: `capacity * size_of::<Entry>() + extra_space * size_of::<Key>()`.
+- `bytes_per_element`: Normalized memory cost per stored key: `bytes_estimate / elements`.
+
+These metrics are recorded by the `BenchRecord` and written to `results.csv` after each benchmark iteration.
+
 ## Python Side
 ### `scripts/bench.py`
 This script:

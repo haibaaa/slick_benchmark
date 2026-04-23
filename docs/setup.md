@@ -77,10 +77,16 @@ Each row records one `(dataset, workload, table)` benchmark outcome:
 - `load_factor`: approximate occupancy relative to the initial capacity hint
 - `insert_ns_per_op`: average insert cost in nanoseconds
 - `find_ns_per_op`: average find cost in nanoseconds
-- `insert_count`: number of inserts executed by the workload
 - `find_count`: number of finds executed by the workload
 
-Lower timing values indicate better performance for that metric.
+### Understanding Space Metrics
+Newer columns in `results.csv` provide insight into memory efficiency:
+- `capacity`: The raw slot count allocated.
+- `elements`: Number of unique keys stored.
+- `bytes_estimate`: The calculated total bytes occupied by the structure (main tables + overflow areas).
+- `bytes_per_element`: The average byte cost per key, useful for comparing space-time tradeoffs across implementations.
+
+Lower timing values and lower `bytes_per_element` values indicate better performance and efficiency.
 
 ## Reading the Plots
 The plotting pipeline generates one PNG per workload in `plots/`.
@@ -88,6 +94,8 @@ Each plot contains:
 - insert cost by dataset
 - find cost by dataset
 - one bar series per table
+
+Workload-specific space efficiency plots are also generated as `plots/space_{workload}.png`, visualizing the `bytes_per_element` metric across datasets.
 
 Use these plots to compare tradeoffs between tables under the same workload rather than comparing
 across unrelated workloads.

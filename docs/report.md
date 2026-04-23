@@ -113,6 +113,19 @@ The standard baseline consistently performs best or near-best in the local runs.
 treated as a controlled algorithmic reference in the same way as the custom tables, but it remains
 an important practical comparison point.
 
+## Space Efficiency
+The addition of memory metrics provides a clearer picture of implementation trade-offs:
+
+- **Probing Tables (Linear/Quadratic)**: Maintain a steady memory footprint relative to their capacity. At a 0.75 load factor, they are among the most space-efficient custom implementations.
+- **Cuckoo Hashing**: While lookup-efficient, Cuckoo hashing requires dual tables and can trigger aggressive rehashes when relocation chains fail, occasionally leading to lower physical memory utilization.
+- **Slick Hashing**: Shows the highest raw capacity usage because it maintains both a partitioned main table and an overflow "backyard." However, it selectively ejects only high-collision keys, attempting to keep the primary blocks dense and cache-local.
+- **std_set**: Often the most space-efficient due to mature internal bucket management, though its exact memory footprint can be harder to predict than fixed-capacity structures.
+
+## Time-Space Tradeoffs
+- **Cuckoo Hashing** trades insertion time (due to kicks) for nearly optimal lookup time.
+- **Slick Hashing** trades raw memory (main table + backyard) and insertion complexity to maintain probe locality even under high load.
+- **Linear/Quadratic Probing** represent the simplest tradeoff: low overhead and fast inserts at the cost of potential find degradation under heavy clustering.
+
 ## Key Insights
 ### Insert vs Find Tradeoffs
 - Cuckoo hashing shifts cost toward insertion and away from lookup.
