@@ -67,7 +67,12 @@ where
 
     let best = best.unwrap();
     let metrics = best_metrics.unwrap();
-    let load_factor = dataset.keys.len() as f64 / config.initial_capacity as f64;
+    // Use actual table capacity for load factor, not initial hint
+    let load_factor = if metrics.0 > 0 {
+        metrics.1 as f64 / metrics.0 as f64
+    } else {
+        0.0
+    };
     
     let bytes_estimate = metrics.0 * std::mem::size_of::<(K, ())>() + metrics.2 * std::mem::size_of::<K>();
     let bytes_per_element = if metrics.1 > 0 { bytes_estimate / metrics.1 } else { 0 };

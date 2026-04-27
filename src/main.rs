@@ -84,7 +84,7 @@ where
     K: Hash + Eq + Clone + Default,
 {
     let config = slickbench::runner::bench::RunConfig {
-        initial_capacity: 1024,
+        initial_capacity: dataset.keys.len(),
         repetitions: reps,
     };
 
