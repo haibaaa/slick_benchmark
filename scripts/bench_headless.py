@@ -26,9 +26,11 @@ U64_DATASETS = {"uniform", "sequential", "zipf"}
 STRING_DATASETS = {"norvig"}
 U64_SIZE = 200_000
 STRING_SIZE = 50_000
-RESULTS_PATH = Path("results.csv")
-PLOTS_DIR = Path("plots")
-DATA_DIR = Path("data")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RESULTS_DIR = PROJECT_ROOT / "results"
+RESULTS_PATH = RESULTS_DIR / "results.csv"
+PLOTS_DIR = PROJECT_ROOT / "plots"
+DATA_DIR = PROJECT_ROOT / "data"
 NORVIG_PATH = DATA_DIR / "norvig_words.txt"
 WIKI_PATH = DATA_DIR / "wiki_titles.txt"
 
@@ -224,8 +226,10 @@ def main() -> None:
     ensure_datasets()
     build_release()
 
-    if RESULTS_PATH.exists():
-        starting_size = RESULTS_PATH.stat().st_size
+    results_csv = RESULTS_DIR / "results.csv"
+    
+    if results_csv.exists():
+        starting_size = results_csv.stat().st_size
     else:
         starting_size = 0
 
@@ -234,15 +238,15 @@ def main() -> None:
             size = dataset_size(dataset)
             run_benchmark(dataset, workload, size)
 
-    if RESULTS_PATH.exists():
-        ending_size = RESULTS_PATH.stat().st_size
+    if results_csv.exists():
+        ending_size = results_csv.stat().st_size
         print(
             f"[bench.py] results.csv size: before={starting_size} bytes, after={ending_size} bytes"
         )
     else:
         raise FileNotFoundError("results.csv was not created by benchmark runs")
 
-    generate_plots(RESULTS_PATH)
+    generate_plots(results_csv)
 
 
 if __name__ == "__main__":

@@ -24,8 +24,9 @@ WORKLOADS = ["bulk", "mixed", "read_heavy"]
 
 # Project root is parent of scripts/ directory
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RESULTS_DIR = PROJECT_ROOT / "results"
 PLOTS_DIR = PROJECT_ROOT / "plots"
-DEFAULT_OUTPUT = str(PROJECT_ROOT / "results_var.csv")
+DEFAULT_OUTPUT = str(RESULTS_DIR / "results_var.csv")
 
 
 def print_command(command: list[str]) -> None:
@@ -33,7 +34,7 @@ def print_command(command: list[str]) -> None:
     print(f"[var.py] $ {' '.join(command)}")
 
 
-def run_benchmark(dataset: str, workload: str, size: int, output_csv: str) -> None:
+def run_benchmark(dataset: str, workload: str, size: int, output_csv: str, initial_capacity: int = None) -> None:
     """Execute one benchmark run with given parameters."""
     cmd = [
         "cargo", "run", "--release", "--",
@@ -42,6 +43,8 @@ def run_benchmark(dataset: str, workload: str, size: int, output_csv: str) -> No
         "--size", str(size),
         "--output", output_csv,
     ]
+    if initial_capacity:
+        cmd.extend(["--initial-capacity", str(initial_capacity)])
     print_command(cmd)
     result = subprocess.run(cmd, text=True, capture_output=True, cwd=PROJECT_ROOT)
     
@@ -210,6 +213,11 @@ def main() -> None:
         action="store_true",
         help="Delete existing results CSV before running (avoids old data interference)",
     )
+    parser.add_argument(
+        "--target-lf",
+        type=float,
+        help="Target load factor (adjusts capacity = size / target_lf)",
+    )
     args = parser.parse_args()
     
     # Resolve output path relative to project root if not absolute
@@ -229,8 +237,10 @@ def main() -> None:
         
         for step in range(args.steps):
             size = args.base_size * (10 ** step)
-            print(f"\n[var.py] Step {step + 1}/{args.steps}: size={size}")
-            run_benchmark(args.dataset, args.workload, size, str(output_path))
+            # Calculate initial_capacity based on target load factor
+            initial_capacity = int(size / args.target_lf) if args.target_lf else None
+            print(f"\n[var.py] Step {step + 1}/{args.steps}: size={size}, cap={initial_capacity}")
+            run_benchmark(args.dataset, args.workload, size, str(output_path), initial_capacity)
     
     # Generate plots
     if not output_path.exists():

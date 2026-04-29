@@ -28,12 +28,16 @@ struct Cli {
     seed: u64,
 
     /// Output CSV file path
-    #[arg(long, default_value = "results.csv")]
+    #[arg(long, default_value = "results/results.csv")]
     output: String,
 
     /// Number of repetitions per (table, workload) pair
     #[arg(long, default_value_t = 3)]
     reps: usize,
+
+    /// Initial capacity hint for hash tables (overrides dataset size default)
+    #[arg(long)]
+    initial_capacity: Option<usize>,
 }
 
 /// Expands to one benchmark run per table implementation for a specific
@@ -79,12 +83,12 @@ macro_rules! run_all_tables_for_workload {
 }
 
 /// Executes one workload across all table implementations for a dataset type.
-fn run_workload<K>(dataset: &Dataset<K>, reps: usize, workload: &str) -> Vec<BenchRecord>
+fn run_workload<K>(dataset: &Dataset<K>, reps: usize, workload: &str, initial_capacity: Option<usize>) -> Vec<BenchRecord>
 where
     K: Hash + Eq + Clone + Default,
 {
     let config = slickbench::runner::bench::RunConfig {
-        initial_capacity: dataset.keys.len(),
+        initial_capacity: initial_capacity.unwrap_or_else(|| dataset.keys.len()),
         repetitions: reps,
     };
 
@@ -117,26 +121,31 @@ fn main() {
             &slickbench::datasets::uniform::generate(cli.size, cli.seed),
             cli.reps,
             &cli.workload,
+            cli.initial_capacity,
         ),
         "sequential" => run_workload(
             &slickbench::datasets::sequential::generate(cli.size, cli.seed),
             cli.reps,
             &cli.workload,
+            cli.initial_capacity,
         ),
         "zipf" => run_workload(
             &slickbench::datasets::zipf::generate(cli.size, cli.seed),
             cli.reps,
             &cli.workload,
+            cli.initial_capacity,
         ),
         "norvig" => run_workload(
             &slickbench::datasets::norvig::load(cli.size, cli.seed),
             cli.reps,
             &cli.workload,
+            cli.initial_capacity,
         ),
         "wikipedia" => run_workload(
             &slickbench::datasets::wikipedia::load(cli.size, cli.seed),
             cli.reps,
             &cli.workload,
+            cli.initial_capacity,
         ),
         other => panic!("unsupported dataset '{other}'"),
     };

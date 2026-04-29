@@ -1,7 +1,7 @@
 # Report
 
 ## Scope
-This summary is based on local benchmark results currently stored in `results.csv`. The observations
+This summary is based on local benchmark results currently stored in `results/results.csv`. The observations
 below focus on the implemented datasets:
 - `uniform`
 - `sequential`

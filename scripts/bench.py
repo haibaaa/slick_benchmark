@@ -15,18 +15,21 @@ import subprocess
 import sys
 from pathlib import Path
 
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 import pandas as pd
 
-DATASETS = ["uniform", "sequential", "zipf", "norvig"]
+DATASETS = ["uniform", "sequential", "zipf", "norvig", "wikipedia"]
 WORKLOADS = ["bulk", "mixed", "read_heavy"]
 U64_DATASETS = {"uniform", "sequential", "zipf"}
-STRING_DATASETS = {"norvig"}
+STRING_DATASETS = {"norvig", "wikipedia"}
 U64_SIZE = 200_000
 STRING_SIZE = 50_000
-RESULTS_PATH = Path("results.csv")
-PLOTS_DIR = Path("plots")
-DATA_DIR = Path("data")
+RESULTS_DIR = Path(__file__).resolve().parent.parent / "results"
+RESULTS_PATH = RESULTS_DIR / "results.csv"
+PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 NORVIG_PATH = DATA_DIR / "norvig_words.txt"
 WIKI_PATH = DATA_DIR / "wiki_titles.txt"
 
@@ -218,29 +221,71 @@ def generate_plots(results_path: Path) -> None:
 
 
 def main() -> None:
-    """Run the benchmark matrix and produce plots from the resulting CSV."""
-    ensure_datasets()
-    build_release()
+    parser = argparse.ArgumentParser(description="SlickBench headless benchmark runner and plotter")
+    parser.add_argument(
+        "--dataset",
+        choices=DATASETS,
+        default="uniform",
+        help="Dataset to benchmark (default: uniform)",
+    )
+    parser.add_argument(
+        "--workload",
+        choices=WORKLOADS,
+        default="bulk",
+        help="Workload to run (default: bulk)",
+    )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=4,
+        help="Number of 10x workload increments (default: 4)",
+    )
+    parser.add_argument(
+        "--base-size",
+        type=int,
+        default=10000,
+        help="Starting dataset size (default: 10000)",
+    )
+    parser.add_argument(
+        "--output",
+        default=str(RESULTS_DIR / "results_var.csv"),
+        help=f"Output CSV file (default: {RESULTS_DIR / 'results_var.csv'})",
+    )
+    parser.add_argument(
+        "--plot-only",
+        action="store_true",
+        help="Skip benchmarking, only plot existing results",
+    )
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Delete existing results CSV before running (avoids old data interference)",
+    )
+    args = parser.parse_args()
 
-    if RESULTS_PATH.exists():
-        starting_size = RESULTS_PATH.stat().st_size
-    else:
-        starting_size = 0
+    # Resolve output path relative to results directory
+    output_path = RESULTS_DIR / args.output
 
-    for dataset in DATASETS:
-        for workload in WORKLOADS:
-            size = dataset_size(dataset)
-            run_benchmark(dataset, workload, size)
+    # Delete old CSV if fresh flag is set
+    if args.fresh and output_path.exists():
+        output_path.unlink()
+        print(f"[bench.py] Deleted existing {output_path} for fresh run")
 
-    if RESULTS_PATH.exists():
-        ending_size = RESULTS_PATH.stat().st_size
-        print(
-            f"[bench.py] results.csv size: before={starting_size} bytes, after={ending_size} bytes"
-        )
-    else:
-        raise FileNotFoundError("results.csv was not created by benchmark runs")
+    # Run benchmarks if not plot-only
+    if not args.plot_only:
+        print(f"[bench.py] Running {args.steps} steps (10x each) for {args.dataset}/{args.workload}")
+        print(f"[bench.py] Base size: {args.base_size}, Steps: {args.steps}")
 
-    generate_plots(RESULTS_PATH)
+        for step in range(args.steps):
+            size = args.base_size * (10 ** step)
+            print(f"\n[bench.py] Step {step + 1}/{args.steps}: size={size}")
+            run_benchmark(args.dataset, args.workload, size, str(output_path))
+
+    # Generate plots
+    if not output_path.exists():
+        raise FileNotFoundError(f"No results file found: {output_path}")
+
+    generate_plots(output_path)
 
 
 if __name__ == "__main__":
